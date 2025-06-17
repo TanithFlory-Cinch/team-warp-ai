@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
+// Cache for 1 day (86400 seconds), then revalidate
+export const revalidate = 86400;
+
 export async function GET() {
   try {
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -21,7 +24,12 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(data);
+    // Return response with 1-day cache headers
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=172800',
+      },
+    });
   } catch (err) {
     console.error('API route error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
