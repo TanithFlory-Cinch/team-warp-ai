@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import {ContactList} from '@/components/ContactList';
 import {PersonProfile} from '@/components/PersonProfile';
 import {CompanyProfile} from '@/components/CompanyProfile';
@@ -48,11 +50,23 @@ export type EmploymentHistory = {
 };
 
 const Page = () => {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  
   const [currentView, setCurrentView] = useState<'contacts' | 'person' | 'company'>('contacts');
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [contactsData, setContactsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Redirect to sign-in if not authenticated
+  useEffect(() => {
+    if (status === 'loading') return; // Still loading
+    if (!session) {
+      router.push('/auth/signin');
+      return;
+    }
+  }, [session, status, router]);
 
   useEffect(() => {
     fetch('/api/contacts')
@@ -185,12 +199,46 @@ const Page = () => {
     setSelectedCompany(null);
   };
 
+  // Show loading while checking authentication
+  if (status === 'loading') {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  // Don't render if not authenticated
+  if (!session) {
+    return null;
+  }
+
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center">Loading data...</div>;
   }
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Add user info and sign out button */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            {session.user?.image && (
+              <img 
+                src={session.user.image} 
+                alt={session.user.name || ''} 
+                className="w-8 h-8 rounded-full"
+              />
+            )}
+            <span className="text-sm text-gray-700">
+              Welcome, {session.user?.name || session.user?.email}
+            </span>
+          </div>
+          <button
+            onClick={() => signOut()}
+            className="text-sm text-red-600 hover:text-red-800 cursor-pointer"
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+
       <Navigation 
         currentView={currentView}
         onBackToContacts={handleBackToContacts}

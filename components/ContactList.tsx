@@ -133,7 +133,7 @@ export const ContactList = ({ people, companies, onPersonClick, onCompanyClick }
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => onCompanyClick(company)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium cursor-pointer"
                       >
                         View Details
                       </button>
